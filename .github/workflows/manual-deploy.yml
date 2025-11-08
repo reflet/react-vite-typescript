@@ -1,0 +1,97 @@
+name: Manual Deploy
+
+on:
+  # 手動実行
+  workflow_dispatch:
+    # 手動実行の前に、デプロイ先を実行者に確認する!!
+    inputs:
+      environment:
+        description: "デプロイ先環境"
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+        default: "development"
+
+      version:
+        description: "デプロイするバージョン"
+        required: false
+        type: string
+        default: "latest"
+
+      skip_tests:
+        description: "テストをスキップする"
+        required: false
+        type: boolean
+        default: false
+
+      log_level:
+        description: "ログレベル"
+        required: false
+        type: choice
+        options:
+          - debug
+          - info
+          - warning
+          - error
+        default: "info"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: 入力値の表示
+        run: |
+          echo "🎯 環境: ${{ inputs.environment }}"
+          echo "🎯 リージョン： ${{ vars.AWS_REGION }}"
+          echo "🎯 バケット： ${{ vars.AWS_S3_BUCKET }}"
+          echo "📦 バージョン: ${{ inputs.version }}"
+          echo "🧪 テストスキップ: ${{ inputs.skip_tests }}"
+          echo "📝 ログレベル: ${{ inputs.log_level }}"
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: 依存関係インストール
+        run: npm ci
+
+      - name: テスト実行
+        if: ${{ inputs.skip_tests == false }}
+        run: npm test
+
+      - name: ビルド
+        run: npm run build
+        env:
+          LOG_LEVEL: ${{ inputs.log_level }}
+
+      #- uses: aws-actions/configure-aws-credentials@v4
+      #  with:
+      #    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #    aws-region: ${{ vars.AWS_REGION }}
+
+      - name: デプロイ
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          echo "🚀 ${{ inputs.environment }} 環境にデプロイ中..."
+          # ここに実際のデプロイコマンド
+          aws s3 sync build/ s3://${{ vars.AWS_S3_BUCKET }}/
+
+      - name: デプロイ完了
+        run: |
+          echo "✅ デプロイ完了！"
+          echo "環境: ${{ inputs.environment }}"
+          echo "バージョン: ${{ inputs.version }}"
