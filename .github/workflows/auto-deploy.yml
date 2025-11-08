@@ -22,6 +22,19 @@ on:
   #pull_request:
   #  branches: [main]
 
+  # 手動実行（入力あり）
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "デプロイ先環境"
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+        default: "development"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -53,6 +66,15 @@ jobs:
     needs: [build, test]
     runs-on: ubuntu-latest
     steps:
+      - name: 環境判定(手動=入力値,自動=ブランチで判定)
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "ENV=${{ inputs.environment }}" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "ENV=production" >> $GITHUB_ENV
+          else
+            echo "ENV=development" >> $GITHUB_ENV
+          fi
       - uses: actions/download-artifact@v4
         with:
           name: dist
@@ -61,4 +83,5 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
+          echo "デプロイ先: ${{ env.ENV }}"
           aws s3 sync dist/ s3://${{ vars.AWS_S3_BUCKET }}/
