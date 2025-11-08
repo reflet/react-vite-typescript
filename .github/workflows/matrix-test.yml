@@ -1,0 +1,21 @@
+# 3種類のOSランナー（linux,windows,macos） と 3種類のNode.js(16, 18, 20) の組み合わせごとにジョブが並列実行されます
+# Lint がどのOS・Nodeバージョンでも通るかを手動でまとめて確認するためのワークフローです
+name: Matrix Test
+
+# 手動実行
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [16, 18, 20]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm run lint
