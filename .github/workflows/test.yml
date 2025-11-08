@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: github.ref_type == 'branch' # tagのプッシュ時にはテストしない
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
