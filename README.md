@@ -2,6 +2,11 @@
 
 React + TypeScript + Vite で構築された開発環境です。
 
+## ミドルウェア
+
+- Node 20.19
+- Typescript 4.3.5
+
 ## セットアップ
 
 ```bash
