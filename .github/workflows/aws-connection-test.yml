@@ -1,0 +1,19 @@
+name: AWS Connection Test
+
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: S3バケット一覧取得
+        run: aws s3 ls
+
+      - name: 接続成功
+        run: echo "✅ AWS接続成功！"
