@@ -75,14 +75,28 @@ jobs:
           else
             echo "ENV=development" >> $GITHUB_ENV
           fi
-      - uses: actions/download-artifact@v4
+
+      - name: ビルド成果物をダウンロード
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
-      - name: Deploy to S3
+
+      - name: デプロイ (to AWS S3 Bucket)
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           echo "デプロイ先: ${{ env.ENV }}"
           aws s3 sync dist/ s3://${{ vars.AWS_S3_BUCKET }}/
+
+      - name: CloudFront キャッシュ無効化
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: デプロイ完了通知
+        run: |
+          echo "✅ デプロイが完了しました！"
+          echo "URL: https://${{ vars.AWS_S3_BUCKET }}.s3-website-${{ vars.AWS_REGION }}.amazonaws.com"
