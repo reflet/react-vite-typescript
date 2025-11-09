@@ -1,7 +1,7 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
-import HomePage from './pages/HomePage'
-import ContactPage from './pages/ContactPage'
-import LandingPage from './pages/LandingPage'
+import HomePage from "@/pages/HomePage";
+import ContactPage from "@/pages/ContactPage";
+import LandingPage from "@/pages/LandingPage";
 
 function App() {
   const location = useLocation()
